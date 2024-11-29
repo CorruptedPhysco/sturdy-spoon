@@ -7,55 +7,121 @@
   <style>
     body {
       font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
-      background-color: #f0f0f0;
+      background: linear-gradient(to bottom, #1e1e2f, #2a2a3c);
+      color: #fff;
     }
+
     #video-container {
-      width: 80%;
+      width: 90%;
       max-width: 800px;
       background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+      position: relative;
     }
+
     video {
       width: 100%;
       height: auto;
+      display: block;
+    }
+
+    #loading-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.2em;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px 20px;
+      border-radius: 5px;
+      display: none;
+    }
+
+    #error-message {
+      text-align: center;
+      font-size: 1em;
+      color: #ff4c4c;
+      margin-top: 20px;
+    }
+
+    #retry-button {
+      display: inline-block;
+      background-color: #ff4c4c;
+      color: white;
+      padding: 10px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      margin-top: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #retry-button:hover {
+      background-color: #d84343;
     }
   </style>
 </head>
 <body>
   <div id="video-container">
+    <div id="loading-message">Loading video...</div>
     <video id="video-player" controls>
       <p>Your browser does not support the video tag.</p>
     </video>
   </div>
+  <div id="error-message" style="display: none;">
+    Unable to load the video. Please try again later.
+    <br />
+    <button id="retry-button">Retry</button>
+  </div>
 
   <script>
-    // Function to fetch the video link and load it
     async function fetchVideoUrl() {
+      const loadingMessage = document.getElementById('loading-message');
+      const videoPlayer = document.getElementById('video-player');
+      const errorMessage = document.getElementById('error-message');
+      const retryButton = document.getElementById('retry-button');
+
+      loadingMessage.style.display = 'block'; // Show loading message
+      errorMessage.style.display = 'none';   // Hide error message
+
       try {
         const response = await fetch('https://turbo-fortnight.onrender.com/get-video-link');
-        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.statusText}`);
+        }
 
-        // Get the video URL from the API response
+        const data = await response.json();
         const videoUrl = data.video_link;
+
         if (videoUrl) {
-          // Set the video URL to the video player
-          const videoPlayer = document.getElementById('video-player');
           videoPlayer.src = videoUrl;
-          videoPlayer.load();  // Load the new video
-          videoPlayer.play();  // Play the video
+          videoPlayer.load();
+          videoPlayer.play();
         } else {
-          alert('Video URL not found');
+          throw new Error('Video URL not found in response.');
         }
       } catch (error) {
-        console.error('Error fetching the video:', error);
+        console.error('Error fetching video:', error);
+
+        // Show error message
+        errorMessage.style.display = 'block';
+      } finally {
+        loadingMessage.style.display = 'none'; // Hide loading message
       }
     }
 
-    // Fetch the video URL on page load
+    // Retry functionality
+    document.getElementById('retry-button').addEventListener('click', fetchVideoUrl);
+
+    // Fetch video URL on page load
     fetchVideoUrl();
   </script>
 </body>
